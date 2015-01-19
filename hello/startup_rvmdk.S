@@ -73,6 +73,7 @@ __heap_limit
         AREA    RESET, CODE, READONLY
         THUMB
 
+		EXTERN	IR_Handler
 ;******************************************************************************
 ;
 ; The vector table.
@@ -97,7 +98,7 @@ __Vectors
         DCD     IntDefaultHandler           ; The PendSV handler
         DCD     IntDefaultHandler           ; The SysTick handler
         DCD     IntDefaultHandler           ; GPIO Port A
-        EXTERN IR_Handler           		; GPIO Port B
+        DCD     IR_Handler           ; GPIO Port B
         DCD     IntDefaultHandler           ; GPIO Port C
         DCD     IntDefaultHandler           ; GPIO Port D
         DCD     IntDefaultHandler           ; GPIO Port E
@@ -126,7 +127,7 @@ __Vectors
         DCD     IntDefaultHandler           ; Analog Comparator 2
         DCD     IntDefaultHandler           ; System Control (PLL, OSC, BO)
         DCD     IntDefaultHandler           ; FLASH Control
-        DCD     IntDefaultHandler           ; GPIO Port F
+        DCD     IntDefaultHandler           	; GPIO Port F
         DCD     IntDefaultHandler           ; GPIO Port G
         DCD     IntDefaultHandler           ; GPIO Port H
         DCD     IntDefaultHandler           ; UART2 Rx and Tx

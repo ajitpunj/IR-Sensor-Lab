@@ -1,26 +1,27 @@
-
+//Ajit Punj and Baban Malhi
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+#include "inc/hw_gpio.h"
+#include "inc/hw_ints.h"
+#include "inc/hw_nvic.h"
 #include "driverlib/debug.h"
 #include "driverlib/fpu.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/interrupt.h"
+
+
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
-
-#include "inc/hw_gpio.h"
-#include "inc/hw_ints.h"
-#include "inc/hw_nvic.h"
-#include "driverlib/interrupt.h"
-
 #include "inc/tm4c123gh6pm.h"
 #include "driverlib/timer.h"
+
 // global integers for edge 1 and edge 2
 volatile double edge1, edge2;
 
@@ -87,31 +88,41 @@ void IR_Handler (void) {
 
 int
 main(void)
-{	
-		ROM_FPULazyStackingEnable();//from hello
+{
+        ConfigureUART();
+    
+		//ROM_FPULazyStackingEnable();//from hello
+        //set clock frequency to 50 MHz
 		ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+    
+        //enable ports F and B
 		ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-		
 		ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-		ConfigureUART();
-		ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);//leds
-		ROM_GPIOPadConfigSet(GPIO_PORTB_BASE, GPIO_PIN_6, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
-		double bitValues[32];
-		double pulseWidth=0;
-		int arrayPos=0;
-    ROM_GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_6);
-		ROM_GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_6, GPIO_BOTH_EDGES);
-		GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_6);
+    
+        //configure PB5 as input before configuring pad w/ pull up resistors
+        ROM_GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_5);
+		ROM_GPIOPadConfigSet(GPIO_PORTB_BASE, GPIO_PIN_5, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
+    
+        //enable LED outputs
+        ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
+    
+        //configure interrupt type for PB5
+		ROM_GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_5, GPIO_BOTH_EDGES);
+		GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_5);
 		ROM_IntEnable(INT_GPIOB);
 		ROM_IntMasterEnable();
 		edge1=0; edge2=0;
 		ROM_GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_1);//red led
+        double bitValues[32];
+        double pulseWidth=0;
+        int arrayPos=0;
 	
 		while(1)
     {
-			UARTprintf("hits");
+			UARTprintf("hits \n");
 			ROM_SysCtlSleep();
 			//after interrupt completes, sleep again
+            UARTprintf("hits 2 \n");
 			ROM_SysCtlSleep();
 			//after interrupt for edge 2, do edge1-edge2, find numerical value, map it to 1 or 0 bit
 			pulseWidth=edge1-edge2; //counting down, so edge 1-edge2= width
